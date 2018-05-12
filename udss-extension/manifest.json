@@ -1,0 +1,36 @@
+{
+
+  "manifest_version": 2,
+  "name": "UDSS",
+  "version": "0.1",
+
+  "description": "UDSS (for Universal Distributed Steganalysis System) client",
+
+   "background": {
+    "scripts": []
+  },
+
+  "icons": {
+    "32": "icons/udss-32.png",
+    "64": "icons/udss-64.png"
+  },
+
+  "content_scripts": [
+    {
+      //"matches": ["*://*.com/*"],
+      "js": ["udss.js"]
+    }
+  ],
+
+  "permissions": [
+    "http://10.42.0.1:9000/*",
+    "webRequest"
+    ],
+
+  "browser_action": {
+    "default_icon": "icons/udss-32.png",
+    "default_title": "UDSS",
+    "default_popup": "popup/index.html"
+  }
+
+}

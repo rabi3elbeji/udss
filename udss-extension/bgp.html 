@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+<script src="socket.io.js"></script>
+<script>
+    var address = "10.42.0.1";
+    var client = io("http://" + address + ":9000/");
+</script>
+</body>
+</html>
