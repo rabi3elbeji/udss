@@ -17,20 +17,19 @@
 
   "content_scripts": [
     {
-      //"matches": ["*://*.com/*"],
+      "matches": ["*://*.io/*"],
       "js": ["udss.js"]
     }
   ],
 
   "permissions": [
-    "http://10.42.0.1:9000/*",
+    "http://localhost:9000/*",
     "webRequest"
     ],
 
   "browser_action": {
     "default_icon": "icons/udss-32.png",
-    "default_title": "UDSS",
-    "default_popup": "popup/index.html"
+    "default_title": "UDSS"
   }
 
 }

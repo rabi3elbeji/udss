@@ -4,19 +4,16 @@ class SimpleEcho(WebSocket):
 
     def handleMessage(self):
         # echo message back to client
-        self.sendMessage(self.data)
-        print(self.data)
+        #self.sendMessage(self.data)
         print(self.data)
 
     def handleConnected(self):
         print(self.address, 'connected')
+        self.sendMessage("hiii from server model 1 ...")
 
     def handleClose(self):
         print(self.address, 'closed')
 
-
-host = '10.42.0.1'
-port = 9000
-
-server = SimpleWebSocketServer('10.42.0.1', 9000, SimpleEcho)
+server = SimpleWebSocketServer('localhost', 9001, SimpleEcho)
 server.serveforever()
+

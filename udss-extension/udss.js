@@ -1,51 +1,74 @@
-// Init the websocket!
-var ws = null;
+// Init image json oject
+var allImagesJson  = {}
+var imagesToSend = {}
 
-if ("WebSocket" in window) {
+detectedImages = getAllImages();
+
+
 
 // Server @ & port
-server_adr = '10.42.0.1'
+server_adr = 'localhost'
 server_port = '9000'
 // the server url
-server_url = "ws://"+server_adr+":"+server_port+"/echo";
-// Open websocket
-var ws = new WebSocket(server_url);
+ws = new WebSocket('wss://'+server_adr+":"+server_port);
 
-// ws events
+// open event
 ws.onopen = function() {
-    // Web Socket is connected, send data using send()
-    console.log("Connection to server is opened...");
-};
-                
-ws.onmessage = function (evt) { 
-    var received_msg = evt.data;
-    console.log("Message is received...");
-    console.log("MEssage: "+received_msg);
-};
-                
-ws.onclose = function() { 
-    // websocket is closed.
-    console.log("Connection is closed..."); 
+    console.log("WebSocket Connection Opened");
+    // Serialize javascript object to json
+    jsonImages = JSON.stringify(detectedImages)
+    ws.send(jsonImages);
 };
 
-}else {
-    // The browser doesn't support WebSocket
-    console.log("WebSocket NOT supported by your Browser!");
+// recieved message event
+ws.onmessage = function(msg) {
+     console.log(msg.data);
 }
 
-// Get All images from the current web page
-imagesJson = getAllImages();
 
 
-//  Print images in console.
-console.log(imagesJson);
 
 
- 
+
+
+//getImageToSend(detectedImages, allImagesJson);
+
+/**
+// To start the loop
+var mainLoopId = setInterval(function(){
+    detectedImages = getAllImages();
+    //getImageToSend(detectedImages, allImagesJson);
+    
+    console.log("hii");
+}, 5000);
+**/
+
+
+// Function to filter images to send to the udss server
+function getImageToSend(arr1, arr2) {
+   
+    for (var i = 0, len1 = arr1.length; i < len1; i++) {
+       
+        if(arr2.length>0){
+            for (var j = 0, len2 = arr2.length; j < len2; j++) {
+                if (arr1[i].url != arr2[j].url) {
+                    imagesToSend.push(arr1[i]);
+                    allImagesJson.push(arr1[i]);
+                }
+            }
+        }else{
+            imagesToSend.push(arr1[i]);
+            allImagesJson.push(arr1[i]);
+
+        }
+        
+    }
+}
+
 // Filter image based on their height and width
-function filter_image(height, width) {
-    _minHeight = 200;
-    _minWidth  = 400;
+function filterImageBySize(height, width) {
+    _minHeight = 180;
+    _minWidth  = 180;
     if(height>_minHeight && width > _minWidth)
         return true;
     else
@@ -54,36 +77,42 @@ function filter_image(height, width) {
 
 // Get all images in the current web page
 function getAllImages() {
-    // Get all images in the web page
-	var images = document.getElementsByTagName('img'); 
-	var imagesInfo = {}
-    var image_id = 0;
-    // Loop all images in the web page
-	for(var i = 0; i < images.length; i++) {
-		var currentImage = {}
-		var height = images[i].height;
-		var width = images[i].width;
-		var load_complete  = images[i].complete;
-        var url = images[i].src;
-		if(load_complete == true){
-            // Check the size of the image
-            if(filter_image(height, width) == true){
-                ++image_id;
-                currentImage['id'] = "udss_image"+image_id;
-                currentImage['height'] = height;
-                currentImage['width'] = width;
-                currentImage['url'] = url;
-                imagesInfo[i] = currentImage; 
-                // color the selected image
-                images[i].id = currentImage['id'];
-                images[i].style.border = "5px solid orangered";
-                images[i].title = "Checking this image in progress";
-                //images[i].onmouseover = function(){console.log("just hove")};
-            }
-		}
-	}
+    var imagesInfo = []
+    try {
+        // Get all images in the web page
+    	var images = document.getElementsByTagName('img'); 
+        var image_id = 0;
+        // Loop all images in the web page
+    	for(var i = 0; i < images.length; i++) {
+    		var currentImage = {}
+    		var height = images[i].height;
+    		var width = images[i].width;
+    		var load_complete  = images[i].complete;
+            var url = images[i].src;
+    		if(load_complete == true){
+                // Check the size of the image
+                if(filterImageBySize(height, width) == true){
+                    currentImage['id'] = "udss_image"+image_id;
+                    currentImage['height'] = height;
+                    currentImage['width'] = width;
+                    currentImage['url'] = url;
+                    imagesInfo.push(currentImage); 
+                    // color the selected image
+                    
+                    images[i].id = currentImage['id'];
+                    images[i].style.border = "5px solid orangered";
+                    images[i].title = "Checking this image in progress";
+                    //images[i].onmouseover = function(){console.log("just hove")};
+                    
+                    ++image_id;
+                }
+    		}
+    	}
+   } catch(err) {
+        //console.log(err.message);
+    }
 
-    return JSON.stringify(imagesInfo);
+    return imagesInfo;
 }
 
 

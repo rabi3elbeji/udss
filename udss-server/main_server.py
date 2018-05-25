@@ -1,54 +1,104 @@
-# Socket server in python using select function
- 
-import socket, select
-  
-if __name__ == "__main__":
-      
-    CONNECTION_LIST = []    # list of socket clients
-    RECV_BUFFER = 4096 # Advisable to keep it as an exponent of 2
-    PORT = 9000
-         
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # this has no effect, why ?
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind(("localhost", PORT))
-    server_socket.listen(10)
- 
-    # Add server socket to the list of readable connections
-    CONNECTION_LIST.append(server_socket)
- 
-    print "Chat server started on port " + str(PORT)
- 
-    while 1:
-        # Get the list sockets which are ready to be read through select
-        read_sockets,write_sockets,error_sockets = select.select(CONNECTION_LIST,[],[])
-        
-        for sock in read_sockets:
-            
-            #New connection
-            if sock == server_socket:
-                # Handle the case in which there is a new connection recieved through server_socket
-                sockfd, addr = server_socket.accept()
-                CONNECTION_LIST.append(sockfd)
-                print "Client (%s, %s) connected" % addr
-                 
-            #Some incoming message from a client
-            else:
-                # Data recieved from client, process it
-                try:
-                    #In Windows, sometimes when a TCP program closes abruptly,
-                    # a "Connection reset by peer" exception will be thrown
-                    data = sock.recv(RECV_BUFFER)
-                    # echo back the client message
-                    if data:
-                        sock.send('OK ... ' + data)
-                 
-                # client disconnected, so remove from socket list
-                except:
-                    broadcast_data(sock, "Client (%s, %s) is offline" % addr)
-                    print "Client (%s, %s) is offline" % addr
-                    sock.close()
-                    CONNECTION_LIST.remove(sock)
-                    continue
-         
-    server_socket.close()
+import ssl
+from SimpleWebSocketServer import WebSocket, SimpleSSLWebSocketServer
+import json
+import os
+import _thread
+from utils.msql_manager import MySQLManager
+from utils.server_model_manager import ServerModelManager
+
+# Init mysql manager
+mySQLManager = MySQLManager("localhost", "root", "")
+
+
+# Get all servers
+serversInfo = mySQLManager.getAllServers()
+#_thread.start_new_thread(serverModelManager.connectToModelServers(serversInfo), ())
+#modelServerWS = serverModelManager.connectToModelServers(serversInfo)
+
+
+class UdssServer(WebSocket):
+
+    def __init__(self):
+        super(UdssServer, self).__init__()
+        serversInfo = mySQLManager.getAllServers()
+        self.connectToModelServers(serversInfo)
+
+    def handleConnected(self):
+        print(self.address, 'connected')
+        #serverModelManager = ServerModelManager()
+        #self.modelServerWS = serverModelManager.connectToModelServers(serversInfo)
+
+
+    def handleClose(self):
+        print(self.address, 'closed')
+
+
+    def handleMessage(self):
+        # echo message back to client
+        #self.sendMessage("Thanks client, well recieved")
+
+        # Parse JSON into an object with attributes corresponding to dict keys.
+        receivedImages = json.loads(self.data)
+        serversInfo = mySQLManager.getAllServers()
+        # filter the appropriate images top each server
+        serverImages = self.filterServersByReceivedData(serversInfo, receivedImages)
+        self.sendDataToServers(serversInfo, serverImages)
+
+    # Filter server by data
+    def filterServersByReceivedData(self, servers, images):
+        # output var
+        serverImages = {}
+
+        # loop servers
+        for (i, server) in enumerate(servers):
+            serverId = server['id']
+            serverImageHeight = server['image_height']
+            serverImageWidth = server['image_width']
+            serverImageType = server['image_type']
+
+            # loop data
+            for (j, image) in enumerate(images):
+                recvImageHeight = image['height']
+                recvImageWidth = image['width']
+                recvImageUrl = image['url']
+                recvImageName, recvImageType = os.path.splitext(recvImageUrl)
+                recvImageType = recvImageType[1:]
+
+                # choose the appropriate image
+
+            '''
+                We will add all images bcz is just an exemple
+            '''
+            serverImages[serverId] = images
+
+        return serverImages
+
+    def sendDataToServers(self, servers, data):
+        # loop servers
+        for (serverId, images) in enumerate(data):
+            serverWS = modelServerWS[serverId]
+            serverWS.sendData(images)
+
+    def getServerAdress(self, servers, id):
+        # loop servers
+        for (i, server) in enumerate(servers):
+            serverId = server['id']
+            serverAdress =server['address']
+            if(serverId == id):
+                break
+        return serverAdress
+
+
+
+
+cls = UdssServer
+host = 'localhost'
+port = 9000
+cert = '../cert/cert.pem'
+key = '../cert/key.pem'
+protocol = ssl.PROTOCOL_TLSv1
+
+server = SimpleSSLWebSocketServer(host, port, cls, cert, key, version=protocol)
+server.serveforever()
+
+
