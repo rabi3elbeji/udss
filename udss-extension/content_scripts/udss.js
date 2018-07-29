@@ -2,15 +2,26 @@
 var allImagesJson  = {}
 var imagesToSend = {}
 
+// store images in an array
 detectedImages = getAllImages();
-
-
 
 // Server @ & port
 server_adr = 'localhost'
-server_port = '9000'
+server_port = '9001'
+
 // the server url
-ws = new WebSocket('wss://'+server_adr+":"+server_port);
+//ws = new WebSocket('wss://'+server_adr+":"+server_port);
+var ws = new WebSocket('wss://localhost:9001/');
+
+var currentdate = new Date(); 
+var datetime = "Last Sync: " + currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+
+console.log(datetime);
 
 // open event
 ws.onopen = function() {
@@ -25,12 +36,6 @@ ws.onmessage = function(msg) {
      console.log(msg.data);
 }
 
-
-
-
-
-
-
 //getImageToSend(detectedImages, allImagesJson);
 
 /**
@@ -43,19 +48,22 @@ var mainLoopId = setInterval(function(){
 }, 5000);
 **/
 
-
 // Function to filter images to send to the udss server
 function getImageToSend(arr1, arr2) {
    
     for (var i = 0, len1 = arr1.length; i < len1; i++) {
        
         if(arr2.length>0){
+            
             for (var j = 0, len2 = arr2.length; j < len2; j++) {
+
+                // ignore redendante images
                 if (arr1[i].url != arr2[j].url) {
                     imagesToSend.push(arr1[i]);
                     allImagesJson.push(arr1[i]);
                 }
             }
+
         }else{
             imagesToSend.push(arr1[i]);
             allImagesJson.push(arr1[i]);
@@ -118,6 +126,7 @@ function getAllImages() {
 
 // Sync data
 function getServers(auth_url, data) {
+
     var formData = new FormData();
     formData.append("info", data);
     console.log(auth_url);
@@ -129,10 +138,13 @@ function getServers(auth_url, data) {
         var percant = parseInt((current/total)*100, 10);
         // DO whatever you want with progress
     });
+
     xhr.open("POST", auth_url, true);
     xhr.send(formData);
+
     xhr.onload = function() {
         if (this.status === 200)
             console.log(this)
     };
+    
 }

@@ -1,7 +1,8 @@
 import websocket
 import _thread
 import time
-
+import ssl
+ssl.match_hostname = lambda cert, hostname: True
 
 class ClientWebSocket(object):
 

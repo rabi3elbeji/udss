@@ -2,47 +2,35 @@ import ssl
 from SimpleWebSocketServer import WebSocket, SimpleSSLWebSocketServer
 import json
 import os
-import _thread
 from utils.msql_manager import MySQLManager
-from utils.server_model_manager import ServerModelManager
 
 # Init mysql manager
-mySQLManager = MySQLManager("localhost", "root", "")
-
-
-# Get all servers
-serversInfo = mySQLManager.getAllServers()
-#_thread.start_new_thread(serverModelManager.connectToModelServers(serversInfo), ())
-#modelServerWS = serverModelManager.connectToModelServers(serversInfo)
-
+#mySQLManager = MySQLManager("localhost", "root", "")
 
 class UdssServer(WebSocket):
 
     def __init__(self):
         super(UdssServer, self).__init__()
-        serversInfo = mySQLManager.getAllServers()
-        self.connectToModelServers(serversInfo)
+        #serversInfo = mySQLManager.getAllServers()
+        #self.connectToModelServers(serversInfo)
 
     def handleConnected(self):
         print(self.address, 'connected')
-        #serverModelManager = ServerModelManager()
-        #self.modelServerWS = serverModelManager.connectToModelServers(serversInfo)
-
 
     def handleClose(self):
         print(self.address, 'closed')
 
-
     def handleMessage(self):
+        print("hhhh")
         # echo message back to client
         #self.sendMessage("Thanks client, well recieved")
 
         # Parse JSON into an object with attributes corresponding to dict keys.
-        receivedImages = json.loads(self.data)
-        serversInfo = mySQLManager.getAllServers()
+        #receivedImages = json.loads(self.data)
+        #serversInfo = mySQLManager.getAllServers()
         # filter the appropriate images top each server
-        serverImages = self.filterServersByReceivedData(serversInfo, receivedImages)
-        self.sendDataToServers(serversInfo, serverImages)
+       # serverImages = self.filterServersByReceivedData(serversInfo, receivedImages)
+       #self.sendDataToServers(serversInfo, serverImages)
 
     # Filter server by data
     def filterServersByReceivedData(self, servers, images):
@@ -89,8 +77,6 @@ class UdssServer(WebSocket):
         return serverAdress
 
 
-
-
 cls = UdssServer
 host = 'localhost'
 port = 9000
@@ -98,6 +84,7 @@ cert = '../cert/cert.pem'
 key = '../cert/key.pem'
 protocol = ssl.PROTOCOL_TLSv1
 
+print("Starting UDSS main server ...")
 server = SimpleSSLWebSocketServer(host, port, cls, cert, key, version=protocol)
 server.serveforever()
 

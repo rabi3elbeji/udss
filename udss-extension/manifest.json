@@ -18,18 +18,19 @@
   "content_scripts": [
     {
       "matches": ["*://*.io/*"],
-      "js": ["udss.js"]
+      "js": ["content_scripts/udss.js"]
     }
   ],
 
   "permissions": [
-    "http://localhost:9000/*",
+    "http://localhost:9001/*",
     "webRequest"
     ],
 
   "browser_action": {
     "default_icon": "icons/udss-32.png",
-    "default_title": "UDSS"
+    "default_title": "UDSS",
+    "default_popup": "popup/show-stats.html"
   }
 
 }

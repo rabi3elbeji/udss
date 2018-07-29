@@ -1,19 +1,24 @@
-from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+#!/usr/bin/env python
 
-class SimpleEcho(WebSocket):
+# WSS (WS over TLS) client example, with a self-signed certificate
 
-    def handleMessage(self):
-        # echo message back to client
-        #self.sendMessage(self.data)
-        print(self.data)
+import asyncio
+import pathlib
+import ssl
+import websockets
 
-    def handleConnected(self):
-        print(self.address, 'connected')
-        self.sendMessage("hiii from server model 1 ...")
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_context.load_verify_locations('../cert/cert.pem')
 
-    def handleClose(self):
-        print(self.address, 'closed')
+async def hello():
+    async with websockets.connect(
+            'wss://localhost:9000', ssl=ssl_context) as websocket:
+        name = input("What's your name? ")
 
-server = SimpleWebSocketServer('localhost', 9001, SimpleEcho)
-server.serveforever()
+        await websocket.send(name)
+        print(f"> {name}")
 
+        greeting = await websocket.recv()
+        print(f"< {greeting}")
+
+asyncio.get_event_loop().run_until_complete(hello())
